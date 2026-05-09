@@ -127,7 +127,7 @@ auto TimestampType::ToString(const Value &val) const -> std::string {
   if (tz < 0) {
     tz = -tz;
   }
-  snprintf(zone, zone_len, "%02d", tz);  // NOLINT
+  snprintf(zone, zone_len, "%02d", tz % 100);  // NOLINT
   str[27] = 0;
   return std::string(std::string(str) + std::string(zone));
 }
