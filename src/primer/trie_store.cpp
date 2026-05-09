@@ -7,46 +7,46 @@ template <class T>
 auto TrieStore::Get(std::string_view key) -> std::optional<ValueGuard<T>> {
   Trie root;
   {
-    std::lock_guard<std::mutex>lock(root_lock_);
+    std::lock_guard<std::mutex> lock(root_lock_);
     root = root_;
   }
 
   const T *value = root.Get<T>(key);
 
-  if(value == nullptr){
+  if (value == nullptr) {
     return std::nullopt;
   }
 
-  return std::optional<ValueGuard<T>>(std::in_place,std::move(root),*value);
+  return std::optional<ValueGuard<T>>(std::in_place, std::move(root), *value);
 }
 
 template <class T>
 void TrieStore::Put(std::string_view key, T value) {
-  std::lock_guard<std::mutex>lock(write_lock_);
+  std::lock_guard<std::mutex> lock(write_lock_);
   Trie root;
   {
-    std::lock_guard<std::mutex>lock(root_lock_);
+    std::lock_guard<std::mutex> lock(root_lock_);
     root = root_;
   }
   auto new_root = root.Put<T>(key, std::move(value));
 
   {
-    std::lock_guard<std::mutex>lock(root_lock_);
+    std::lock_guard<std::mutex> lock(root_lock_);
     root_ = new_root;
   }
 }
 
 void TrieStore::Remove(std::string_view key) {
-  std::lock_guard<std::mutex>lock(write_lock_);
+  std::lock_guard<std::mutex> lock(write_lock_);
   Trie root;
   {
-    std::lock_guard<std::mutex>lock(root_lock_);
+    std::lock_guard<std::mutex> lock(root_lock_);
     root = root_;
   }
   auto new_root = root.Remove(key);
   {
-    std::lock_guard<std::mutex>lock(root_lock_);
-    root_ =new_root;
+    std::lock_guard<std::mutex> lock(root_lock_);
+    root_ = new_root;
   }
 }
 
