@@ -23,8 +23,8 @@
 
 namespace bustub {
 
-auto Planner::PlanFuncCall(const BoundFuncCall &expr,
-                           const std::vector<AbstractPlanNodeRef> &children) -> AbstractExpressionRef {
+auto Planner::PlanFuncCall(const BoundFuncCall &expr, const std::vector<AbstractPlanNodeRef> &children)
+    -> AbstractExpressionRef {
   std::vector<AbstractExpressionRef> args;
   for (const auto &arg : expr.args_) {
     auto [_1, arg_expr] = PlanExpression(*arg, children);
@@ -34,8 +34,8 @@ auto Planner::PlanFuncCall(const BoundFuncCall &expr,
 }
 
 // NOLINTNEXTLINE
-auto Planner::GetFuncCallFromFactory(const std::string &func_name,
-                                     std::vector<AbstractExpressionRef> args) -> AbstractExpressionRef {
+auto Planner::GetFuncCallFromFactory(const std::string &func_name, std::vector<AbstractExpressionRef> args)
+    -> AbstractExpressionRef {
   if (func_name == "lower" || func_name == "upper") {
     if (args.size() != 1) {
       throw Exception(fmt::format("function {} expects exactly one argument, but got {}", func_name, args.size()));

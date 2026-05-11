@@ -5,7 +5,7 @@
 namespace bustub {
 
 template <class T>
-auto PutHelper(std::shared_ptr<const TrieNode> node, std::string_view key, size_t index,
+auto PutHelper(const std::shared_ptr<const TrieNode> &node, std::string_view key, size_t index,
                const std::shared_ptr<T> &value) -> std::shared_ptr<const TrieNode> {
   std::map<char, std::shared_ptr<const TrieNode>> children;
   if (node != nullptr) {
@@ -27,14 +27,14 @@ auto PutHelper(std::shared_ptr<const TrieNode> node, std::string_view key, size_
   if (node != nullptr) {  // 这个会发生吗
     auto cloned = node->Clone();
     cloned->children_ = std::move(children);
-    return std::shared_ptr<const TrieNode>(std::move((cloned)));
+    return {std::move((cloned))};
   }
 
   return std::make_shared<const TrieNode>(std::move((children)));
 }
 
-auto RemoveHelper(std::shared_ptr<const TrieNode> node, std::string_view key,
-                  size_t index) -> std::pair<std::shared_ptr<const TrieNode>, bool> {
+auto RemoveHelper(const std::shared_ptr<const TrieNode> &node, std::string_view key, size_t index)
+    -> std::pair<std::shared_ptr<const TrieNode>, bool> {
   if (node == nullptr) {
     return {nullptr, false};
   }
@@ -95,11 +95,11 @@ auto Trie::Get(std::string_view key) const -> const T * {
   if (node == nullptr) {
     return nullptr;
   }
-  auto value_node_ = dynamic_cast<const TrieNodeWithValue<T> *>(node.get());
-  if (value_node_ == nullptr) {
+  auto value_node = dynamic_cast<const TrieNodeWithValue<T> *>(node.get());
+  if (value_node == nullptr) {
     return nullptr;
   }
-  return value_node_->value_.get();
+  return value_node->value_.get();
 }
 
 template <class T>
