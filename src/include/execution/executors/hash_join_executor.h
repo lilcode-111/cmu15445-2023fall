@@ -12,15 +12,47 @@
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
+#include "common/rid.h"
+#include "common/util/hash_util.h"
 #include "execution/executor_context.h"
 #include "execution/executors/abstract_executor.h"
 #include "execution/plans/hash_join_plan.h"
 #include "storage/table/tuple.h"
+#include "type/type.h"
+#include "type/value.h"
 
 namespace bustub {
+
+struct HashJoinKey {
+  std::vector<Value> keys_;
+  auto operator==(const HashJoinKey &other) const -> bool {
+    if (keys_.size() != other.keys_.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < keys_.size(); ++i) {
+      if (keys_[i].CompareEquals(other.keys_[i]) != CmpBool::CmpTrue) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+struct HashJoinKeyHasher {
+  auto operator()(const HashJoinKey &key) const -> std::size_t {
+    std::size_t curr_hash = 0;
+    for (const auto &value : key.keys_) {
+      curr_hash = HashUtil::CombineHashes(curr_hash, HashUtil::HashValue(&value));
+    }
+    return curr_hash;
+  }
+};
 
 /**
  * HashJoinExecutor executes a nested-loop JOIN on two tables.
@@ -54,6 +86,18 @@ class HashJoinExecutor : public AbstractExecutor {
  private:
   /** The HashJoin plan node to be executed. */
   const HashJoinPlanNode *plan_;
+  std::unique_ptr<AbstractExecutor> left_child_;
+  std::unique_ptr<AbstractExecutor> right_child_;
+  Tuple left_tuple_;
+  RID left_rid_;
+  const std::vector<Tuple> *matched_right_tuples_{nullptr};
+  size_t matched_right_tuple_idx_;
+
+  auto MakeLeftJoinKey(const Tuple &tuple) const -> HashJoinKey;
+  auto MakeRightJoinKey(const Tuple &tuple) const -> HashJoinKey;
+  auto MakeOutputTuple(const Tuple &left_tuple, const Tuple *right_tuple) const -> Tuple;
+
+  std::unordered_map<HashJoinKey, std::vector<Tuple>, HashJoinKeyHasher> hash_table_;
 };
 
 }  // namespace bustub

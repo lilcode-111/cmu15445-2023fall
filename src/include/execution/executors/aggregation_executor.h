@@ -24,6 +24,7 @@
 #include "execution/expressions/abstract_expression.h"
 #include "execution/plans/aggregation_plan.h"
 #include "storage/table/tuple.h"
+#include "type/type.h"
 #include "type/value_factory.h"
 
 namespace bustub {
@@ -72,13 +73,49 @@ class SimpleAggregationHashTable {
    */
   void CombineAggregateValues(AggregateValue *result, const AggregateValue &input) {
     for (uint32_t i = 0; i < agg_exprs_.size(); i++) {
+      auto &result_val = result->aggregates_[i];
+      const auto &input_val = input.aggregates_[i];
       switch (agg_types_[i]) {
-        case AggregationType::CountStarAggregate:
-        case AggregationType::CountAggregate:
-        case AggregationType::SumAggregate:
-        case AggregationType::MinAggregate:
-        case AggregationType::MaxAggregate:
+        case AggregationType::CountStarAggregate: {
+          result_val = result_val.Add(ValueFactory::GetIntegerValue(1));
           break;
+        }
+        case AggregationType::CountAggregate: {
+          if (!input_val.IsNull()) {
+            if (result_val.IsNull()) {
+              result_val = ValueFactory::GetIntegerValue(1);
+            } else {
+              result_val = result_val.Add(ValueFactory::GetIntegerValue(1));
+            }
+          }
+          break;
+        }
+        case AggregationType::SumAggregate: {
+          if (!input_val.IsNull()) {
+            if (result_val.IsNull()) {
+              result_val = input_val;
+            } else {
+              result_val = result_val.Add(input_val);
+            }
+          }
+          break;
+        }
+        case AggregationType::MinAggregate: {
+          if (!input_val.IsNull()) {
+            if (result_val.IsNull() || input_val.CompareLessThan(result_val) == CmpBool::CmpTrue) {
+              result_val = input_val;
+            }
+          }
+          break;
+        }
+        case AggregationType::MaxAggregate: {
+          if (!input_val.IsNull()) {
+            if (result_val.IsNull() || input_val.CompareGreaterThan(result_val) == CmpBool::CmpTrue) {
+              result_val = input_val;
+            }
+          }
+          break;
+        }
       }
     }
   }
@@ -95,6 +132,10 @@ class SimpleAggregationHashTable {
     CombineAggregateValues(&ht_[agg_key], agg_val);
   }
 
+  void InsertEmptyCombine() {
+    AggregateKey agg_key{{}};
+    ht_.insert({agg_key, GenerateInitialAggregateValue()});
+  }
   /**
    * Clear the hash table
    */
@@ -134,6 +175,8 @@ class SimpleAggregationHashTable {
 
   /** @return Iterator to the end of the hash table */
   auto End() -> Iterator { return Iterator{ht_.cend()}; }
+
+  auto Size() -> size_t { return ht_.size(); }
 
  private:
   /** The hash table is just a map from aggregate keys to aggregate values */
@@ -201,6 +244,10 @@ class AggregationExecutor : public AbstractExecutor {
 
   /** The child executor that produces tuples over which the aggregation is computed */
   std::unique_ptr<AbstractExecutor> child_executor_;
+
+  SimpleAggregationHashTable aht_;
+
+  SimpleAggregationHashTable::Iterator aht_iterator_;
 
   /** Simple aggregation hash table */
   // TODO(Student): Uncomment SimpleAggregationHashTable aht_;

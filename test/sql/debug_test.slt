@@ -1,0 +1,43 @@
+cat > ../test/sql/debug-index.slt <<'EOF'
+statement ok
+set force_optimizer_starter_rule=yes
+
+statement ok
+create table t1(v1 int, v2 int, v3 int);
+
+query
+insert into t1 values (1, 50, 645), (2, 40, 721), (4, 20, 445), (5, 10, 445), (3, 30, 645);
+----
+5
+
+statement ok
+create index t1v1 on t1(v1);
+
+query
+select * from t1;
+----
+1 50 645
+2 40 721
+4 20 445
+5 10 445
+3 30 645
+
+statement ok
+explain select * from t1 where v1 = 1;
+
+
+query
+select * from t1 where v1 = 1;
+----
+1 50 645
+
+query
+insert into t1 values (6, 60, 600);
+----
+1
+
+query
+select * from t1 where v1 = 6;
+----
+6 60 600
+EOF

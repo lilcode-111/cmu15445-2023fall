@@ -12,16 +12,26 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
+#include <utility>
 #include <vector>
 
+#include "binder/bound_order_by.h"
+#include "catalog/schema.h"
 #include "execution/executor_context.h"
 #include "execution/executors/abstract_executor.h"
+#include "execution/executors/values_executor.h"
+#include "execution/expressions/abstract_expression.h"
 #include "execution/plans/window_plan.h"
 #include "storage/table/tuple.h"
+#include "type/type.h"
+#include "type/type_id.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 
 namespace bustub {
-
 /**
  * The WindowFunctionExecutor executor executes a window function for columns using window function.
  *
@@ -90,5 +100,9 @@ class WindowFunctionExecutor : public AbstractExecutor {
 
   /** The child executor from which tuples are obtained */
   std::unique_ptr<AbstractExecutor> child_executor_;
+
+  std::vector<Tuple> result_tuples_;
+
+  size_t cursor_{0};
 };
 }  // namespace bustub
